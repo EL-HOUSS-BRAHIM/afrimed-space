@@ -1,0 +1,32 @@
+name: budgetify-gateway
+
+services:
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile.gateway:/etc/caddy/Caddyfile:ro
+      - ../website:/srv/afrimed:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [edge]
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+networks:
+  edge:
+    external: true
+    name: budgetify-edge
+volumes:
+  caddy_data:
+    external: true
+    name: budgetify_caddy_data
+  caddy_config:
+    external: true
+    name: budgetify_caddy_config

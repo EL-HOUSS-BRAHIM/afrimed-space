@@ -1,0 +1,37 @@
+(api) {
+	encode zstd gzip
+	request_body {
+		max_size 64KB
+	}
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Cache-Control no-store
+		-Server
+	}
+}
+
+lyvora.afrimed.space {
+	import api
+	reverse_proxy production-api:8787
+}
+
+lyvora-preview.afrimed.space {
+	import api
+	reverse_proxy preview-api:8787
+}
+
+afrimed.space {
+	root * /srv/afrimed
+	encode zstd gzip
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Content-Security-Policy "default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+		Cache-Control "public, max-age=300"
+		-Server
+	}
+	file_server
+}
