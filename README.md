@@ -61,5 +61,14 @@ is five minutes.
 
 Published on 2026-10-03. The public root returned HTTP 200 through Cloudflare over
 HTTPS. Production API remained version 1.0.0; preview remained available.
-No GitHub remote is configured yet: publication to the new repository awaits
-its creation. The currently live site was deployed directly over SSH.
+Source: https://github.com/EL-HOUSS-BRAHIM/afrimed-space. Initial publication was deployed directly over SSH.
+
+## Brand assets
+
+Original project artwork is copied unchanged:
+
+- `afrimed-icon.png`: `Abdou05jr/AFRIMED-AI`, `apps/mobile/assets/images/icon.png`
+- `lyvora-icon.png`: `EL-HOUSS-BRAHIM/Budgetify`, `apps/mobile/assets/images/icon.png`
+- `yaqeen-logo.svg`: `angel-022/Yaqeen`, `frontend/public/yaqeen-logo.svg`
+
+The arrows, rosette, and site mark are original SVG page assets.
