@@ -5,7 +5,7 @@ it. Read it before changing hosting. Keep this **one document** accurate as
 platforms, domains, credentials, directories, and deployment processes evolve.
 
 Hardware, active containers, ports, and backend versions were inspected on
-**2026-10-03**. Security baseline information comes from completed provisioning
+**2026-10-10**. Security baseline information comes from completed provisioning
 on 2026-10-02; security settings were not reapplied while writing this guide.
 Examples are instructions, not proof that a future platform has been deployed.
 
@@ -18,7 +18,7 @@ Examples are instructions, not proof that a future platform has been deployed.
 | Operating system | Ubuntu 26.04.1 LTS                                         |
 | Logical CPUs     | 6                                                          |
 | Memory           | About 11 GiB reported by Linux                             |
-| Root disk        | 96 GB; about 3.7 GB used and 93 GB available at inspection |
+| Root disk        | 96 GB; about 15 GB used and 82 GB available at inspection  |
 | Swap             | None configured                                            |
 | SSH              | `budgetify`, port 22, key authentication                   |
 | Runtime          | Docker Engine and Docker Compose                           |
@@ -673,16 +673,20 @@ database or delete persistent volumes as a generic troubleshooting step.
   inventory inspected and this guide created with onboarding/document upkeep
   rules for future AI agents. Backup automation and additional platform runtimes
   are not currently configured.
+- **2026-10-10:** Installed and verified isolated VPS preview Android compilation
+  with persistent npm/Gradle caches and native compiler/memory limits. Production
+  builds remain on EAS. First successful APK delivery and measured timing are
+  recorded in section 20; shared gateway and production API remained healthy.
 
 ## 20. Preview Android compilation on the VPS
 
-**2026-10-10 status: toolchain installed and runtime checked; first VPS APK pending.** Live inspection
+**2026-10-10 status: first VPS preview APK verified and delivered.** Live inspection
 confirmed 6 CPUs, about 10 GiB available memory and 93 GB available disk. The
 production and preview APIs passed their local health checks before setup.
 
-GitHub Actions will retain verification, environment validation, migration
+GitHub Actions retains verification, environment validation, migration
 planning, signature/package/version checks, deployment and artifact storage.
-Only preview native compilation moves to the VPS. Production remains on EAS
+Preview native compilation runs on the VPS. Production remains on EAS
 cloud. No domain, listener, gateway change or new permanent runner is required.
 
 The build area is `/home/budgetify/mobile-build`: `toolchain` contains the image
@@ -693,14 +697,40 @@ native builds independently of the existing website/API deployment lock.
 Source files are tracked in `C:\dev\Budgetify\deploy\mobile-builder` and
 `scripts/release/build-preview-vps.sh` / `run-vps-preview.sh`. The image is
 `lyvora-preview-builder:1`, with Node 24.20.0, Java 17, EAS CLI 24.11.0, Android
-SDK/Build Tools 35, NDK 26.1.10909125 and CMake 3.22.1. Its actual immutable
+SDK 35, Build Tools 34.0.0 and 35.0.0, NDK 26.1.10909125 and CMake 3.22.1. Its actual immutable
 Docker image ID is recorded in each build receipt.
 
-Installed image ID: `sha256:d114fa8404bd2ad1f6df4654d814a3aaf0503fbb2456da4434c101e65de082f0`.
+Installed image ID: `sha256:2e2193809dcb8a91e26fcceeb67f46dbcfdcbfb52b9eb91c22daf3efb4eeee36`.
 Runtime checks confirmed UID/GID 1001, Node 24.20.0, Java 17, EAS CLI 24.11.0,
 NDK and CMake executables, Android signer availability, CPU quota 400000/100000
 and memory limit 8589934592 bytes. Both APIs stayed healthy after setup. Budgetify
-commit `86623b6` activates VPS compilation; a completed APK is not yet asserted.
+commit `86623b6` activates VPS compilation. Its first run exposed a missing Build
+Tools 34 dependency; commit `e89c238` adds it to the read-only image. The corrected
+image passed a non-root Build Tools 34 runtime check. The next run hit the
+container's 8 GiB limit during native compilation: Docker recorded an OOM event,
+and Gradle's daemon disappeared. Both APIs remained healthy. Commit `923294f`
+reduces Gradle to two workers and a 2 GiB heap, bounds the Kotlin daemon at 512 MiB,
+disables project parallelism and wraps SDK/system Ninja with a two-job limit.
+A real six-target Ninja test confirmed peak concurrency of two even with `-j8`
+or `-j 8`, and version/tool queries still worked.
+
+[First successful VPS delivery](https://github.com/EL-HOUSS-BRAHIM/Budgetify/actions/runs/38053185947)
+verified and uploaded the signed APK for exact commit
+`923294fe5a66f8105f9b10f187adef0ae456d807`. All quality, database and infrastructure
+checks passed. GitHub verified the APK ZIP, signature, package, native versions
+and checksum before applying/verifying preview migrations and deploying the API.
+The public preview health endpoint reports `preview-923294f` and that same SHA;
+production remains healthy at version `1.0.0`, commit
+`e9eacc7727331329700721e2eda0091981247010`. The temporary job directory and build
+container were removed; Gradle (4.0 GiB) and npm (562 MiB) caches remain.
+
+The successful build/verification step took **30m38s**, including source/artifact
+transfers, compared with **27m03s** in the last successful hosted GitHub build
+(run `38048166628`). This first completed VPS run does not demonstrate a speed
+improvement. The conservative compiler/memory limits keep native builds within
+the shared server's budget. Future timing changes require measurements; do not
+describe CPU count alone as proof of a faster build. Device QA remains a
+separate check.
 
 The one-shot container runs as the existing unprivileged `budgetify` UID, with
 4 CPUs, 8 GiB RAM, no extra swap, a 1024-PID limit, read-only root filesystem,
