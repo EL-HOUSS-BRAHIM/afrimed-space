@@ -47,7 +47,9 @@ Apache/Nginx server alongside Caddy or claim ports 80/443 for another container.
 The root website introduces Afrimed, Lyvora, and Yaqeen, all marked Coming soon.
 It requires no login. Featuring a project does not mean its application is
 deployed here. Lyvora's API hostname is not its public marketing website. The
-mobile app is built by Expo EAS; it is not a server process on the VPS.
+Production mobile builds run on Expo EAS. Preview compilation is being moved
+to the containerized VPS builder described in section 20; it is not a public
+server process.
 
 Local repositories:
 
@@ -671,3 +673,52 @@ database or delete persistent volumes as a generic troubleshooting step.
   inventory inspected and this guide created with onboarding/document upkeep
   rules for future AI agents. Backup automation and additional platform runtimes
   are not currently configured.
+
+## 20. Preview Android compilation on the VPS
+
+**2026-10-10 status: toolchain installed and runtime checked; first VPS APK pending.** Live inspection
+confirmed 6 CPUs, about 10 GiB available memory and 93 GB available disk. The
+production and preview APIs passed their local health checks before setup.
+
+GitHub Actions will retain verification, environment validation, migration
+planning, signature/package/version checks, deployment and artifact storage.
+Only preview native compilation moves to the VPS. Production remains on EAS
+cloud. No domain, listener, gateway change or new permanent runner is required.
+
+The build area is `/home/budgetify/mobile-build`: `toolchain` contains the image
+build context, `jobs/<run>-<attempt>-<commit>` holds temporary source and outputs,
+and `cache/gradle` plus `cache/npm` hold reusable caches. `build.lock` serializes
+native builds independently of the existing website/API deployment lock.
+
+Source files are tracked in `C:\dev\Budgetify\deploy\mobile-builder` and
+`scripts/release/build-preview-vps.sh` / `run-vps-preview.sh`. The image is
+`lyvora-preview-builder:1`, with Node 24.20.0, Java 17, EAS CLI 24.11.0, Android
+SDK/Build Tools 35, NDK 26.1.10909125 and CMake 3.22.1. Its actual immutable
+Docker image ID is recorded in each build receipt.
+
+Installed image ID: `sha256:d114fa8404bd2ad1f6df4654d814a3aaf0503fbb2456da4434c101e65de082f0`.
+Runtime checks confirmed UID/GID 1001, Node 24.20.0, Java 17, EAS CLI 24.11.0,
+NDK and CMake executables, Android signer availability, CPU quota 400000/100000
+and memory limit 8589934592 bytes. Both APIs stayed healthy after setup. Budgetify
+commit `86623b6` activates VPS compilation; a completed APK is not yet asserted.
+
+The one-shot container runs as the existing unprivileged `budgetify` UID, with
+4 CPUs, 8 GiB RAM, no extra swap, a 1024-PID limit, read-only root filesystem,
+dropped capabilities and no-new-privileges. Its writable mounts contain only
+the current job and build caches. It gets no Docker socket, SSH key, database
+credential, production runtime file or public port. Only the existing preview
+Expo token enters through a private temporary environment file. The job and
+token are removed after the APK and receipt are retrieved, including failures.
+
+GitHub transfers a Git bundle for the exact commit through pinned SSH using the
+existing CI key. The builder checks out that SHA and applies the separately
+prepared public preview configuration. GitHub verifies returned source/version
+identity, APK SHA-256, Android signature, package and native versions before
+migrations or API deployment. Speed improvements require measured builds;
+the first build installs/downloads dependencies and warms caches.
+
+Recovery: restore the prior reviewed GitHub build workflow if the VPS builder
+is unavailable. Production EAS and hosted API services remain independent.
+Do not prune backend rollback images or alter shared Caddy configuration when
+maintaining this builder. Remove only a validated `mobile-build/jobs/...` job
+directory for routine cleanup; retain the dedicated toolchain and caches.
