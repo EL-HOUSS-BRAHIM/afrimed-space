@@ -224,7 +224,8 @@ mount usable or recreate the container deliberately when required.
 ## 7. Source locations and configuration ownership
 
 **Budgetify repository:** backend source in `services/ai`, deployment files in
-`deploy/vps`, scripts in `scripts/deploy-backend.sh` and `rollback-backend.sh`,
+`deploy/vps`, delivery scripts in `scripts/release`, remote helpers in
+`scripts/deploy-backend.sh` and `scripts/rollback-backend.sh`,
 migrations in `supabase/migrations`, workflows in `.github/workflows`.
 
 **Afrimed Space repository:** public assets in `site`, gateway files in `deploy`,
@@ -256,10 +257,13 @@ process rather than adding a third independent gateway configuration owner.
 Open each repository's **Settings → Environments**. Environments belong to
 individual repositories; setting one does not configure another repository.
 
+Required release settings; this table is not a claim that production is configured.
+The current read-only audit gaps are recorded in section 20.
+
 | Repository    | Environment  | Secrets                                   | Variables                                 |
 | ------------- | ------------ | ----------------------------------------- | ----------------------------------------- |
-| Budgetify     | `preview`    | `VPS_SSH_KEY`, `SUPABASE_PUBLISHABLE_KEY` | `VPS_HOST`, `VPS_USER`, `VPS_KNOWN_HOSTS` |
-| Budgetify     | `production` | Same                                      | Same                                      |
+| Budgetify     | `preview`    | `VPS_SSH_KEY`, `SUPABASE_DB_URL`, `EXPO_TOKEN` | `VPS_*`, environment-specific public Supabase/API settings |
+| Budgetify     | `production` | Same credential names, scoped to production | Same public settings plus activation and signing pin |
 | afrimed-space | `website`    | `VPS_SSH_KEY`                             | Same                                      |
 
 `VPS_HOST=169.58.97.2`, `VPS_USER=budgetify`. `VPS_KNOWN_HOSTS` contains previously
@@ -267,9 +271,10 @@ verified server host-key lines. `VPS_SSH_KEY` contains the CI private key, not
 its `.pub` counterpart. Supabase's publishable key is the appropriate backend
 value; never substitute a privileged secret/service-role key.
 
-Production permits `backend-v*` tag refs. Preserve that restriction. App builds
-also use repository `EXPO_TOKEN` and public Supabase configuration such as
-`EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Credentials must be injected at runtime
+Production requires reviewed `v*` tag refs and main for protected manual release
+and rollback, with required release-owner approval. App builds use `EXPO_TOKEN`
+(repository fallback currently works for preview) and public Supabase settings
+such as `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Credentials must be injected at runtime
 or through encrypted build secrets, never echoed into Actions logs.
 
 For another platform, create a dedicated environment and preferably a dedicated
@@ -282,31 +287,29 @@ restricted command/helper or separate runtime/host, not just a new repository.
 
 | Event                           | Result                                |
 | ------------------------------- | ------------------------------------- |
-| Budgetify push to main          | Preview backend `preview-<short SHA>` |
-| Numeric `backend-vX.Y.Z` tag    | Production backend version `X.Y.Z`    |
+| Budgetify push to main          | ARM64 preview APK and backend `1.0.3-preview.<run>.<attempt>` |
+| Numeric `vX.Y.Z` tag or manual production version | Protected production APK/backend version `X.Y.Z` |
 | Pull request                    | Build/verification without deployment |
-| Manual backend workflow on main | Preview deployment                    |
+| Manual V1 Preview on main | Selected APK architecture or compatible preview OTA plus verified backend |
 
 GitHub builds an immutable image tagged with the full commit SHA, saves a
 compressed image bundle/checksum, transfers it over pinned SSH, and executes
-`deploy-backend.sh`. Runtime files include image, alias, port, version, SHA,
+`scripts/release/deploy.sh`. Runtime files include image, alias, port, version, SHA,
 environment, hosted Supabase URL/key, and allowed browser origins. The script
 validates local readiness and exact public version/commit/environment and
 attempts restoration of the previous deployment on failure.
 
-**Local PowerShell release example:** replace the placeholder SHA and choose
-a new unused version after checking the desired commit's verification/preview.
-
-```powershell
-cd C:\dev\Budgetify
-git tag -a backend-v1.0.1 VERIFIED_COMMIT_SHA -m "Backend 1.0.1"
-git push origin backend-v1.0.1
-```
+**Production release:** use **Actions → V1 Release → Run workflow**
+on main, choose an unused `vMAJOR.MINOR.PATCH` and architecture. The successful
+delivery creates its exact-source tag and GitHub Release. An existing version
+tag can also trigger the protected workflow, using that tag's original source.
 
 PATCH means compatible fixes, MINOR compatible features, MAJOR breaking changes.
 Never move/reuse a published tag. Check the workflow and public `/health` after
-publication. Backend deployment does not automatically migrate hosted Supabase.
-An example version is not a direction to publish that version immediately.
+publication. Delivery plans migrations first and applies/verifies them only
+after the APK passes verification (or the OTA payload passes staging checks).
+Production remains disabled until credentials, signing, approval and device QA
+gates pass; an example version is not a direction to ship it immediately.
 
 ## 10. Website publication
 
@@ -525,19 +528,20 @@ automatically loaded system instruction; agents must explicitly read it.
 
 ## 14. Hosted Supabase and application secrets
 
-Supabase remains at `https://hnlieepsxoqeebkreugt.supabase.co`; it is not installed
-on this VPS. There is no configured Supabase custom domain. A CNAME alone does
+Supabase remains hosted: production is `https://hnlieepsxoqeebkreugt.supabase.co`,
+and the verified preview workflow uses `https://vbumjshdbpehcfdreeug.supabase.co`.
+It is not installed on this VPS. There is no configured Supabase custom domain. A CNAME alone does
 not provision a supported Supabase custom domain.
 
 The backend uses the publishable key and the signed-in user's access token;
-RLS remains enforced. Production and preview share this hosted project, so
-preview writes affect real data for that user. Use separate verification users;
-a separate database project/branch requires explicit future configuration.
+RLS remains enforced. Preview and production now use separate project identities;
+the release contract rejects a preview configuration paired with production DB
+credentials. Use dedicated preview verification users and clean up any QA writes.
 
-Keep reviewed migrations in Budgetify `supabase/migrations`. Deployment does not
-reset or automatically migrate the hosted database. Apply reviewed compatible
-migrations deliberately through authenticated Supabase tools/CLI. The hosted
-`app_config.ai_api_url` points to the production API.
+Keep reviewed migrations in Budgetify `supabase/migrations`. Delivery performs a
+dry run first, then applies/verifies the selected environment's reviewed migrations
+after APK verification or OTA staging. It never resets the hosted database.
+Public Supabase and API settings are validated before build cost or mutation.
 
 Optional LLM environment variables exist in the backend example env file, but
 the current workflow does not provision those credentials. A future model
@@ -547,16 +551,23 @@ not reuse the finance database or elevated credentials by default.
 
 ## 15. Mobile preview and release
 
-Budgetify `build-apk-eas` offers preview and release. Preview targets the preview
-API and embeds `preview-<SHA>` metadata. A numeric `app-vX.Y.Z` tag builds a
-signed release APK using the production API; release runs require an app tag
-ref. Android versionCode uses an increasing workflow run number. `extra.release`
-records version, commit, and channel.
+Budgetify **V1 Preview** builds on the isolated VPS; automatic main pushes build
+only ARM64. Manual runs offer one ABI, one universal APK, all four separate APKs,
+or compatible preview OTA. **V1 Release** builds only on EAS cloud.
+Android versionCode uses epoch seconds; separate APK variants share one frozen
+native version. `extra.release` records version, commit and environment.
 
-Backend tags and app tags are independent. EAS manages remote build/signing;
-APK generation does not automatically submit to app stores. Inspect completed
-Expo/GitHub artifact links. The mobile app and its secrets do not belong in the
-public website directory.
+Successful deliveries publish immutable exact-source tags and GitHub Releases:
+`preview-v1.0.3.<run>.<attempt>` as pre-releases, and `vMAJOR.MINOR.PATCH` for
+production. The same version identifies the APK/OTA and backend. Failed builds
+do not publish successful releases. **Retry release publication** reuses the
+original artifact without compiling, migrating or deploying again.
+
+[Downloads and release history](https://github.com/EL-HOUSS-BRAHIM/Budgetify/blob/codex/downloads/README.md)
+requires GitHub sign-in for this private repository. Its generated branch cannot
+trigger a main build. EAS retains signing management; APK generation does not
+submit to app stores. Mobile secrets and private APKs do not belong in the public
+website directory. See Budgetify `docs/RELEASE-PROCESS.md` for gates and recovery.
 
 ## 16. Host maintenance and privileges
 
@@ -604,8 +615,8 @@ as routine maintenance.
 
 ### Backend rollback
 
-Budgetify **Actions → rollback-backend**: select preview with main, or production
-with an existing `backend-vX.Y.Z` ref, matching environment restrictions. It
+Budgetify **Actions → V1 Rollback API → Run workflow** on main: select preview
+or protected production. Production requires its activation flag and approval. It
 restores previous env/Compose, checks public version, and attempts restoration
 of the current configuration if rollback fails. A previous successful release
 must exist; the first production release has no prior production version.
@@ -689,6 +700,53 @@ planning, signature/package/version checks, deployment and artifact storage.
 Preview native compilation runs on the VPS. Production remains on EAS
 cloud. No domain, listener, gateway change or new permanent runner is required.
 
+Budgetify commit `0009d79` adds manual preview delivery choices. Automatic main
+pushes request only `arm64-v8a` (64-bit phones). **V1 Preview → Run workflow**
+offers `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`, or `all` (one universal APK).
+The selected Gradle architectures limit compilation; GitHub checks the APK's
+actual native libraries and includes the selection in its filename and manifest.
+
+The same menu offers `delivery=ota` for preview JavaScript/assets updates, with
+no VPS native compilation. New preview APKs enable EAS Update using native
+fingerprint compatibility. Previously delivered APKs with updates disabled need
+one new installation. An OTA run requires retained proof of a compatible preview
+APK, stages an update without touching the live channel, verifies the preview
+database/API release, then activates it on the `preview` channel. Native changes
+require an APK. Production remains on EAS APK releases with OTA disabled.
+Rollback commands and compatibility exclusions are documented in Budgetify's
+`docs/RELEASE-PROCESS.md`; device update/relaunch verification remains separate.
+The initial ARM64/OTA implementation passed 131 local release tests, lint and
+formatting. Hosted ShellCheck found a summary-redirection style issue before
+compilation; commit `db0d5a5` corrects it, with full ShellCheck/actionlint validation.
+The next run passed quality, database and infrastructure checks and compiled
+ARM64 native tasks. Inspection showed that Expo SDK 52 stores `file:fingerprint`
+in its runtime resource and resolves the actual hash from `assets/fingerprint`.
+Commit `f40e73d` verifies this packaged format, including a new regression test.
+The superseded compilation was cancelled before database/API deployment.
+Run [38058447797](https://github.com/EL-HOUSS-BRAHIM/Budgetify/actions/runs/38058447797) still failed the packaged runtime comparison. Commit `34af456` resolves the SDK fingerprint before compilation and pins that same public runtime for the APK and OTA. Run [38067340480](https://github.com/EL-HOUSS-BRAHIM/Budgetify/actions/runs/38067340480) subsequently passed delivery; device QA remains separate.
+
+On 2026-10-10, Budgetify commit `5727780` adds versioned releases and a private-repository download index on `codex/downloads`. Automatic main commits compile only ARM64; manual choices include one ABI, `all` for a universal APK, `all-separate` for sequential individual APKs, and preview OTA. Production compilation stays on EAS cloud. Each successful delivery publishes its exact source tag and installer/update evidence; publication-only retries reuse original artifacts without repeating native compilation, migrations or API deployment.
+
+The first complete publisher run [38078529225](https://github.com/EL-HOUSS-BRAHIM/Budgetify/actions/runs/38078529225) passed every hosted gate and published `preview-v1.0.3.38078529225.1` at exact commit `572778024e0ee0a0ad81f834364496a96bf35fac`. Its ARM64 APK is 44,989,600 bytes, SHA-256 `30e39f36a7a2211ac273ed66be540f97ab95b291dc66036458e66a1b909a9e9a`; the downloaded asset matched. Build plus APK verification took **14m57s**, with about 4.8 GiB observed container memory. This is an ARM64-only workload, so it is not a like-for-like speed comparison with the earlier universal builds below.
+
+Commit `063b9ed` preserves original release-note bytes while allowing corrected publisher code in recovery. [Publication-only retry 38080076871](https://github.com/EL-HOUSS-BRAHIM/Budgetify/actions/runs/38080076871) passed using the original `5727780` artifacts and retained the original tag/assets. Automatic ARM64 run [38080075655](https://github.com/EL-HOUSS-BRAHIM/Budgetify/actions/runs/38080075655) also passed and published its versioned release at `063b9ed`.
+
+Device verification remains separate: the ARM64 APK installed on the x86_64 emulator, but its native bridge selected the wrong SoLoader ABI path and could not launch React Native. The verified APK contains the ARM64 libraries; a real ARM64 handset has not been tested. Commit `94e4b00` fixes the VPS filename guard that rejected `x86_64` before compilation, with 175 passing release tests and filename/path rejection coverage.
+
+Selected x86_64 run [38081853657](https://github.com/EL-HOUSS-BRAHIM/Budgetify/actions/runs/38081853657) passed all gates and published `preview-v1.0.3.38081853657.1` at exact commit `94e4b002d6c240113adb0f2a7971568a79ed409f`. Its build/verification step took **13m34s**. The 45,365,617-byte downloaded APK matched SHA-256 `32766e1dd95f6a1023864fc0f0998f072eeffea028b89fef41c2cbf444ba8b7a`. It installed over the preview package, launched the actual account screen on Medium_Phone (Android 35 x86_64), and stayed running without a native fatal error. Native version is `1.0.3`, versionCode `1791662489`, runtime `344ae0784cfad44eda482659c2cfbcf41192ac22`. Logs, screenshot, UI hierarchy and device proof are retained under Budgetify `artifacts/release-qa/38081853657`. No account or finance writes were needed. The download page retained the previous ARM64 installer while adding x86_64.
+
+Preview OTA run [38082087442](https://github.com/EL-HOUSS-BRAHIM/Budgetify/actions/runs/38082087442) passed every gate and published `preview-v1.0.3.38082087442.1` at the same exact source. The active Android update is `01a1277d-9ad8-7e33-bf8d-d37b2c5cfe40`, group `de35a889-67f1-4e0a-9b3a-3529b9c2acd2`, with the compatible native runtime above. On emulator launch, Expo recorded 71 successful assets, zero failures, `Update available` and `NEW_UPDATE_LOADED`. The downloaded launch-bundle hash `lBglzffp-E_e3QPaw3g50QD5uU6QhNcCmtkG8YNHymU` matched the live update manifest and the published update ID. A second launch displayed the actual account screen without a fatal error, reported `No update available`, and retained native version/code `1.0.3` / `1791662489`. Evidence is under Budgetify `artifacts/release-qa/38082087442`. This verifies preview OTA download/relaunch on x86_64; physical ARM64/device finance QA remains outstanding.
+
+After OTA, both public health endpoints returned 200: preview reported `1.0.3-preview.38082087442.1` at `94e4b00`; production retained `1.0.0` at `e9eacc7`. Shared gateway configuration and deployment locking remain intact. The completed native container and its private job directory were removed. The generated download page links the latest OTA while retaining both ARM64 and x86_64 installers.
+
+The 2026-10-10 read-only production audit still found missing production public
+Supabase/API settings, database and Expo credentials, signing-certificate pin,
+activation flag, required release-owner review and allowed main/version-tag
+policies. Production activation remains disabled. Repository-level Expo credentials
+work for preview, but actual EAS production delivery and physical-device QA have
+not been verified. Do not copy preview database settings into production or
+enable production merely to make a test pass.
+
 The build area is `/home/budgetify/mobile-build`: `toolchain` contains the image
 build context, `jobs/<run>-<attempt>-<commit>` holds temporary source and outputs,
 and `cache/gradle` plus `cache/npm` hold reusable caches. `build.lock` serializes
@@ -719,8 +777,8 @@ verified and uploaded the signed APK for exact commit
 `923294fe5a66f8105f9b10f187adef0ae456d807`. All quality, database and infrastructure
 checks passed. GitHub verified the APK ZIP, signature, package, native versions
 and checksum before applying/verifying preview migrations and deploying the API.
-The public preview health endpoint reports `preview-923294f` and that same SHA;
-production remains healthy at version `1.0.0`, commit
+At that run, public preview health reported `preview-923294f` and that same SHA;
+production was healthy at version `1.0.0`, commit
 `e9eacc7727331329700721e2eda0091981247010`. The temporary job directory and build
 container were removed; Gradle (4.0 GiB) and npm (562 MiB) caches remain.
 
