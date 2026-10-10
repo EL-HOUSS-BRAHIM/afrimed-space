@@ -11,18 +11,18 @@ Examples are instructions, not proof that a future platform has been deployed.
 
 ## 1. Server inventory and capabilities
 
-| Item             | Configuration                                              |
-| ---------------- | ---------------------------------------------------------- |
-| Public IPv4      | `169.58.97.2`                                              |
-| Hostname         | `vmi3623380`                                               |
-| Operating system | Ubuntu 26.04.1 LTS                                         |
-| Logical CPUs     | 6                                                          |
-| Memory           | About 11 GiB reported by Linux                             |
-| Root disk        | 96 GB; about 15 GB used and 82 GB available at inspection  |
-| Swap             | None configured                                            |
-| SSH              | `budgetify`, port 22, key authentication                   |
-| Runtime          | Docker Engine and Docker Compose                           |
-| Public gateway   | Caddy behind Cloudflare                                    |
+| Item             | Configuration                                             |
+| ---------------- | --------------------------------------------------------- |
+| Public IPv4      | `169.58.97.2`                                             |
+| Hostname         | `vmi3623380`                                              |
+| Operating system | Ubuntu 26.04.1 LTS                                        |
+| Logical CPUs     | 6                                                         |
+| Memory           | About 11 GiB reported by Linux                            |
+| Root disk        | 96 GB; about 15 GB used and 82 GB available at inspection |
+| Swap             | None configured                                           |
+| SSH              | `budgetify`, port 22, key authentication                  |
+| Runtime          | Docker Engine and Docker Compose                          |
+| Public gateway   | Caddy behind Cloudflare                                   |
 
 The VPS can host static sites, containerized APIs, workers, webhooks, and
 scheduled jobs. New services need isolation, resource limits, health checks,
