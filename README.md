@@ -1,7 +1,6 @@
 # Afrimed Space
 
-Public introduction for **Afrimed**, **Lyvora**, and **Yaqeen**. All three projects
-are marked **Coming soon**. Live at https://afrimed.space; no sign-in is required.
+Public introduction for **Afrimed**, **Lyvora**, and **Yaqeen**. Lyvora has presentation pages and a direct Android preview download; Afrimed and Yaqeen are coming soon. Live at https://afrimed.space; no sign-in is required.
 
 ## Repository
 

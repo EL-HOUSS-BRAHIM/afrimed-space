@@ -30,8 +30,14 @@ afrimed.space {
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin
 		Content-Security-Policy "default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
-		Cache-Control "public, max-age=300"
 		-Server
+	}
+	@presentation not path /lyvora/downloads/current/*
+	header @presentation Cache-Control "public, max-age=300"
+	header /lyvora/downloads/current/* {
+		Cache-Control "no-store"
+		CDN-Cache-Control "no-store"
+		Cloudflare-CDN-Cache-Control "no-store"
 	}
 	file_server
 }

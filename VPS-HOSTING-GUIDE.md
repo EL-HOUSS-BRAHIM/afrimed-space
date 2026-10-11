@@ -810,3 +810,11 @@ is unavailable. Production EAS and hosted API services remain independent.
 Do not prune backend rollback images or alter shared Caddy configuration when
 maintaining this builder. Remove only a validated `mobile-build/jobs/...` job
 directory for routine cleanup; retain the dedicated toolchain and caches.
+
+## Lyvora presentation and public preview download — 2026-10-11
+
+Published presentation pages at https://afrimed.space/lyvora/ and https://afrimed.space/lyvora/download.html. The signed ARM64 preview installer from preview-v1.0.38.38172796291.1 was downloaded directly on the VPS and checked against its published SHA-256 (37ed85187a470640a22759b293961f54a44632a313fba6b0bef527bcc79b3d25). Public APK is 41,461,933 bytes at /lyvora/downloads/current/lyvora-preview.apk. This selected preview installer is intentionally public under the user's instruction; private GitHub repository access is unchanged.
+
+Installers live in website/lyvora/downloads/releases/<tag>; current is an atomic directory symlink. Budgetify's locally prepared preview public-download job waits for successful publication, transfers the verified ARM64-compatible APK artifact, verifies it again on the VPS and switches current under the existing deploy lock. OTA releases retain the compatible installer. This automation requires the Budgetify changes to be pushed before it is active. Website recursive copying preserves the VPS-managed downloads. Neither APKs nor GitHub tokens are stored in the website Git repository.
+
+The current download route has no-store browser/CDN headers to avoid stale installers after native releases; other presentation assets retain normal caching. Gateway syntax validation passed, both API health endpoints remained healthy, and page/APK endpoints returned HTTP 200. Previous site backup: incoming/website-before-lyvora-20261011.tar.gz.
