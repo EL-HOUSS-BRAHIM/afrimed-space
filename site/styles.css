@@ -66,6 +66,7 @@ header {
 }
 nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 2rem;
   font-size: 0.875rem;
   font-weight: 600;
@@ -375,6 +376,18 @@ h3 span {
   font-size: 0.6875rem;
   text-align: right;
 }
+a.project-status {
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+a.project-status .status-note {
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
+a.project-status:hover {
+  background: #e8ecdf;
+}
 .about {
   position: relative;
   background: var(--ink);
@@ -511,6 +524,7 @@ footer p {
   nav {
     gap: 1rem;
     font-size: 0.75rem;
+    width: 100%;
   }
   .hero {
     grid-template-columns: 1fr;

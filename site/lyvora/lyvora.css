@@ -57,8 +57,16 @@ header {
 }
 nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 30px;
   font-size: 14px;
+}
+nav a,
+footer a,
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 h1,
 h2 {
@@ -427,10 +435,13 @@ footer {
   }
   header {
     padding: 20px 0;
+    flex-wrap: wrap;
+    gap: 12px;
   }
   nav {
     gap: 16px;
     font-size: 12px;
+    width: 100%;
   }
   .brand {
     font-size: 23px;
@@ -443,6 +454,15 @@ footer {
     grid-template-columns: 1fr;
     padding: 48px 0;
     gap: 36px;
+  }
+  .hero > * {
+    min-width: 0;
+  }
+  .phone {
+    width: 100%;
+    max-width: 285px;
+    transform: none;
+    padding: 24px 14px 18px;
   }
   .intro {
     font-size: 16px;
@@ -457,6 +477,7 @@ footer {
   }
   .actions {
     gap: 18px;
+    flex-wrap: wrap;
   }
   .strip {
     flex-direction: column;
