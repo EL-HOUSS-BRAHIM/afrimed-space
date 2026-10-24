@@ -409,14 +409,31 @@ h3 span {
   color: #ffffff08;
   pointer-events: none;
 }
-.portfolio-link {
+.people {
+  padding: 4rem 0 1rem;
+}
+.people-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 2rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.people-list li {
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--rule);
+}
+.people-list h3 {
+  font-size: 1.375rem;
+  line-height: 1.4;
+}
+.people-list a {
   display: inline-block;
-  color: var(--lime);
+  padding: 0.75rem 0;
+  font-size: 0.875rem;
   text-decoration: underline;
   text-underline-offset: 0.25rem;
-}
-.portfolio-link:focus-visible {
-  outline-color: var(--lime);
 }
 .closing {
   display: flex;
