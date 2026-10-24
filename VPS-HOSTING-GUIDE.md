@@ -40,7 +40,7 @@ Apache/Nginx server alongside Caddy or claim ports 80/443 for another container.
 | Platform                        | Public address                             | Source repository               | Runtime location                    |
 | ------------------------------- | ------------------------------------------ | ------------------------------- | ----------------------------------- |
 | Public project introduction     | `https://afrimed.space`                    | `EL-HOUSS-BRAHIM/afrimed-space` | `~/budgetify/website` through Caddy |
-| Lyvora public website (planned 2026-10-24) | `https://lyvora-finance.tech` | `EL-HOUSS-BRAHIM/afrimed-space`, `lyvora-site/` | `~/budgetify/website/lyvora-site/current` through Docker Caddy |
+| Lyvora public website (verified 2026-10-24) | `https://lyvora-finance.tech` | `EL-HOUSS-BRAHIM/afrimed-space`, `lyvora-site/` | `~/budgetify/website/lyvora-site/current` through Docker Caddy |
 | Lyvora production API           | `https://lyvora.afrimed.space`             | `EL-HOUSS-BRAHIM/Budgetify`     | `~/budgetify/production`            |
 | Lyvora preview API              | `https://lyvora-preview.afrimed.space`     | `EL-HOUSS-BRAHIM/Budgetify`     | `~/budgetify/preview`               |
 | Database/Auth/Supabase services | `https://hnlieepsxoqeebkreugt.supabase.co` | Migrations in Budgetify         | Hosted Supabase; outside VPS        |
@@ -317,7 +317,7 @@ gates pass; an example version is not a direction to ship it immediately.
 
 ### Standalone Lyvora website
 
-Planned 2026-10-24: `lyvora-site/` deploys independently through
+Verified 2026-10-24: `lyvora-site/` deploys independently through
 `.github/workflows/deploy-lyvora-website.yml`. It uses the `website` environment,
 its own workflow concurrency group, and the shared `~/budgetify/deploy.lock`.
 The static files use the existing read-only mount into Docker Caddy; no host
@@ -333,6 +333,18 @@ APK and checksum delivery remains in Budgetify's release pipeline, stored at
 `~/budgetify/website/lyvora/downloads/current`; both domains expose those files
 with `no-store`. Changes to Lyvora content publish without gateway changes.
 Shared route edits still belong in both gateway source repositories.
+
+First independent publication: GitHub Actions run `40102842943`, revision
+`e93c4e503fa3db1eed33a1906a7dbffabbefb701-40102842943-1`; Afrimed gateway/site
+run `40102842928` also passed. The exact revision was checked directly through
+the HTTPS origin. Local QA passed 15 page/viewport cases (320–1440px), keyboard
+navigation and FAQ, assets, download links and reduced motion. Live browser
+journeys passed at 320, 390 and 1440px. APK and checksum returned 200, missing
+pages returned the custom 404, and the www/legacy presentation redirects worked.
+Afrimed, portfolio health and both APIs remained healthy. A failed-readiness
+simulation in an isolated temporary HOME restored the previous release symlink;
+it did not modify the live site. Cloudflare DNS required no changes; the zone's
+existing SSL mode was Full at inspection.
 
 ### Afrimed Space
 
