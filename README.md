@@ -8,6 +8,9 @@ Brahim El Houss (https://brahim-elhouss.tech/), Abderrahmane Benaamar
 (https://github.com/angel-022). Use a verified personal portfolio when available,
 otherwise link to the person's GitHub profile.
 
+Project owners: Afrimed — Abdo (Abderrahmane Benaamar); Lyvora — Brahim El Houss;
+Yaqeen — Zaineb Marzaq.
+
 ## Repository
 
 - GitHub name: `afrimed-space`
