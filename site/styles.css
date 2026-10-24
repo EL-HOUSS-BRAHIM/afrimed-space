@@ -409,6 +409,15 @@ h3 span {
   color: #ffffff08;
   pointer-events: none;
 }
+.portfolio-link {
+  display: inline-block;
+  color: var(--lime);
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
+.portfolio-link:focus-visible {
+  outline-color: var(--lime);
+}
 .closing {
   display: flex;
   align-items: center;
@@ -476,6 +485,8 @@ footer p {
   header {
     min-height: 88px;
     gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1rem 0;
   }
   .brand {
     font-size: 1.5rem;

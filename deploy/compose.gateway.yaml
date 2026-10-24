@@ -12,6 +12,7 @@ services:
       - ../website:/srv/afrimed:ro
       - caddy_data:/data
       - caddy_config:/config
+      - /home/budgetify/portfolio/gateway:/etc/caddy/portfolio:ro
     networks: [edge]
     logging:
       driver: json-file

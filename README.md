@@ -2,6 +2,9 @@
 
 Public introduction for **Afrimed**, **Lyvora**, and **Yaqeen**. Lyvora has presentation pages and a direct Android preview download; Afrimed and Yaqeen are coming soon. Live at https://afrimed.space; no sign-in is required.
 
+The homepage navigation and introduction link to Brahim's portfolio at
+https://brahim-elhouss.tech/.
+
 ## Repository
 
 - GitHub name: `afrimed-space`
