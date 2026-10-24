@@ -11,6 +11,25 @@ otherwise link to the person's GitHub profile.
 Project owners: Afrimed — Abdo (Abderrahmane Benaamar); Lyvora — Brahim El Houss;
 Yaqeen — Zaineb Marzaq.
 
+## Lyvora website
+
+Lyvora has a standalone website at https://lyvora-finance.tech/, sourced from
+`lyvora-site/`. Its independent `deploy-lyvora-website` workflow checks the pages
+in a localhost browser before publishing an atomic static release. It reuses
+the `website` GitHub environment and the shared VPS deployment lock. Routine
+Lyvora publication changes only its release symlink, without reloading Caddy.
+
+The existing Docker Caddy gateway serves the website and redirects `www` to the
+apex. Old `/lyvora/` presentation and download-page URLs redirect to the new
+domain. APKs and checksums remain managed by Budgetify's release pipeline;
+`/downloads/current/*` on the new domain serves the same files as the legacy
+Afrimed download URLs, with `no-store` headers.
+
+Run locally with `python -m http.server 8089 --directory lyvora-site`, then visit
+http://localhost:8089/. With Playwright installed, run
+`node scripts/check-lyvora-site.cjs` for the browser checks. See
+`lyvora-site/README.md` for publication and rollback details.
+
 ## Repository
 
 - GitHub name: `afrimed-space`

@@ -40,11 +40,13 @@ Apache/Nginx server alongside Caddy or claim ports 80/443 for another container.
 | Platform                        | Public address                             | Source repository               | Runtime location                    |
 | ------------------------------- | ------------------------------------------ | ------------------------------- | ----------------------------------- |
 | Public project introduction     | `https://afrimed.space`                    | `EL-HOUSS-BRAHIM/afrimed-space` | `~/budgetify/website` through Caddy |
+| Lyvora public website (planned 2026-10-24) | `https://lyvora-finance.tech` | `EL-HOUSS-BRAHIM/afrimed-space`, `lyvora-site/` | `~/budgetify/website/lyvora-site/current` through Docker Caddy |
 | Lyvora production API           | `https://lyvora.afrimed.space`             | `EL-HOUSS-BRAHIM/Budgetify`     | `~/budgetify/production`            |
 | Lyvora preview API              | `https://lyvora-preview.afrimed.space`     | `EL-HOUSS-BRAHIM/Budgetify`     | `~/budgetify/preview`               |
 | Database/Auth/Supabase services | `https://hnlieepsxoqeebkreugt.supabase.co` | Migrations in Budgetify         | Hosted Supabase; outside VPS        |
 
-The root website introduces Afrimed, Lyvora, and Yaqeen, all marked Coming soon.
+The root website introduces Afrimed, Lyvora, and Yaqeen. Lyvora has an Android
+preview; Afrimed and Yaqeen are marked Coming soon.
 It requires no login. Featuring a project does not mean its application is
 deployed here. Lyvora's API hostname is not its public marketing website. The
 Production mobile builds run on Expo EAS. Preview compilation is being moved
@@ -312,6 +314,27 @@ Production remains disabled until credentials, signing, approval and device QA
 gates pass; an example version is not a direction to ship it immediately.
 
 ## 10. Website publication
+
+### Standalone Lyvora website
+
+Planned 2026-10-24: `lyvora-site/` deploys independently through
+`.github/workflows/deploy-lyvora-website.yml`. It uses the `website` environment,
+its own workflow concurrency group, and the shared `~/budgetify/deploy.lock`.
+The static files use the existing read-only mount into Docker Caddy; no host
+service, extra port, runtime secret, or database is added. Releases are immutable
+directories under `~/budgetify/website/lyvora-site/releases`; an atomic relative
+`current` symlink selects the active version. Failed origin/public checks
+restore the previous symlink. The deployer verifies the exact release identity.
+
+Cloudflare inspection confirmed the zone is active and its apex and `www`
+records already proxy to this VPS. The gateway redirects `www` to the apex.
+Existing Afrimed `/lyvora/` presentation URLs redirect to the new website.
+APK and checksum delivery remains in Budgetify's release pipeline, stored at
+`~/budgetify/website/lyvora/downloads/current`; both domains expose those files
+with `no-store`. Changes to Lyvora content publish without gateway changes.
+Shared route edits still belong in both gateway source repositories.
+
+### Afrimed Space
 
 Edit `C:\dev\afrimed-space\site`; stage intended files including new assets:
 

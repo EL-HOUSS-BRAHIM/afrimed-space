@@ -1,0 +1,70 @@
+name: deploy-lyvora-website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lyvora-site/**"
+      - "scripts/deploy-lyvora-website.sh"
+      - "scripts/check-lyvora-site.cjs"
+      - ".github/workflows/deploy-lyvora-website.yml"
+  pull_request:
+    paths:
+      - "lyvora-site/**"
+      - "scripts/deploy-lyvora-website.sh"
+      - "scripts/check-lyvora-site.cjs"
+      - ".github/workflows/deploy-lyvora-website.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lyvora-website-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check deployment script
+        run: bash -n scripts/deploy-lyvora-website.sh
+      - name: Install browser checker
+        run: |
+          npm install --no-save --package-lock=false playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Verify local website
+        run: node scripts/check-lyvora-site.cjs
+  publish:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: website
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish Lyvora to VPS
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
+          VPS_USER: ${{ vars.VPS_USER }}
+          VPS_KNOWN_HOSTS: ${{ vars.VPS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          release="$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir bundle
+          cp lyvora-site/{index.html,download.html,lyvora.css,lyvora-icon.png,404.html,robots.txt,sitemap.xml} bundle/
+          printf '%s\n' "$release" > bundle/revision.txt
+          name="lyvora-website-$release.tar.gz"
+          tar -czf "$name" -C bundle index.html download.html lyvora.css lyvora-icon.png 404.html robots.txt sitemap.xml revision.txt
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" 'mkdir -p /home/budgetify/incoming'
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes "$name" scripts/deploy-lyvora-website.sh "$VPS_USER@$VPS_HOST:/home/budgetify/incoming/"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "bash /home/budgetify/incoming/deploy-lyvora-website.sh /home/budgetify/incoming/$name $release"
