@@ -31,6 +31,12 @@ lyvora-preview.afrimed.space {
 }
 
 afrimed.space {
+	redir /yaqeen https://yaqeen-w.tech/ 308
+	redir /yaqeen/ https://yaqeen-w.tech/ 308
+	redir /yaqeen/index.html https://yaqeen-w.tech/ 308
+	redir /afrimed https://health.afrimed.space/ 308
+	redir /afrimed/ https://health.afrimed.space/ 308
+	redir /afrimed/index.html https://health.afrimed.space/ 308
 	redir /lyvora https://lyvora-finance.tech/ 308
 	redir /lyvora/ https://lyvora-finance.tech/ 308
 	redir /lyvora/index.html https://lyvora-finance.tech/ 308
@@ -103,6 +109,7 @@ lyvora-finance.tech {
 }
 
 yaqeen-w.tech {
+	redir /index.html / 308
 	root * /srv/afrimed/yaqeen
 	import coming-soon
 }
@@ -112,6 +119,7 @@ www.yaqeen-w.tech {
 }
 
 health.afrimed.space {
+	redir /index.html / 308
 	root * /srv/afrimed/afrimed
 	import coming-soon
 }

@@ -28,6 +28,13 @@ pages and their assets are tracked and use the existing website publication
 workflow, Docker Caddy gateway, and shared VPS deployment lock. Cloudflare proxies
 the three hostnames to the existing origin; no new hosting service is required.
 
+Search metadata includes project-specific titles/descriptions, canonical URLs,
+WebSite microdata, Open Graph and Twitter cards, PNG share images, robots.txt,
+and a one-page sitemap per hostname. `/index.html` and hub-directory copies
+redirect to the canonical homepage. Run `python scripts/check-coming-soon-seo.py`
+locally and add `--live` after deployment. To regenerate share images, run
+`scripts/build-social-previews.py` with Pillow and Windows Georgia/Arial fonts.
+
 ## Lyvora website
 
 Lyvora has a standalone website at https://lyvora-finance.tech/, sourced from

@@ -25,6 +25,8 @@ jobs:
     environment: website
     steps:
       - uses: actions/checkout@v4
+      - name: Check coming-soon SEO
+        run: python3 scripts/check-coming-soon-seo.py
       - name: Publish to VPS
         env:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
