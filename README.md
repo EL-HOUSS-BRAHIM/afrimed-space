@@ -13,6 +13,25 @@ Yaqeen — Zaineb Marzaq.
 
 ## Lyvora website
 
+## Coming-soon project websites
+
+- Yaqeen: https://yaqeen-w.tech/ (`www` redirects to the apex).
+- Afrimed healthcare: https://health.afrimed.space/.
+- https://afrimed.space/ remains the shared project hub and links to both.
+
+These static introductions describe project direction, not released application
+capabilities. There are no signups, medical uploads, consultations, or launch-date
+promises. Content is based on Yaqeen's project overview and the local AFRIMED-AI
+overview; private repository links and implementation details are not published.
+
+Edit `scripts/build-coming-soon.py` and `site/projects.css`, then run
+`python scripts/build-coming-soon.py` to refresh both project folders. Generated
+pages and their assets are tracked and use the existing website publication
+workflow, Docker Caddy gateway, and shared VPS deployment lock. Cloudflare proxies
+the three hostnames to the existing origin; no new hosting service is required.
+
+## Lyvora website
+
 Lyvora has a standalone website at https://lyvora-finance.tech/, sourced from
 `lyvora-site/`. Its independent `deploy-lyvora-website` workflow checks the pages
 in a localhost browser before publishing an atomic static release. It reuses
