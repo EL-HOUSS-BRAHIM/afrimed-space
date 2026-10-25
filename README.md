@@ -11,8 +11,6 @@ otherwise link to the person's GitHub profile.
 Project owners: Afrimed — Abdo (Abderrahmane Benaamar); Lyvora — Brahim El Houss;
 Yaqeen — Zaineb Marzaq.
 
-## Lyvora website
-
 ## Coming-soon project websites
 
 - Yaqeen: https://yaqeen-w.tech/ (`www` redirects to the apex).
