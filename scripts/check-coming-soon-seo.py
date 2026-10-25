@@ -49,9 +49,9 @@ for slug,domain in [('yaqeen','yaqeen-w.tech'),('afrimed','health.afrimed.space'
     robots=read('robots.txt').decode();assert f'Sitemap: {base}sitemap.xml' in robots and 'Disallow: /' not in robots
     tree=ET.fromstring(read('sitemap.xml')); assert [n.text for n in tree.iter() if n.tag.endswith('}loc')]==[base]
     if live:
-        with urlopen(base+'index.html',timeout=30) as r: assert r.url==base
+        with urlopen(Request(base+'index.html',headers={'User-Agent':'Googlebot'}),timeout=30) as r: assert r.url==base
         try:
-            urlopen(base+'missing-page-seo-check',timeout=30)
+            urlopen(Request(base+'missing-page-seo-check',headers={'User-Agent':'Googlebot'}),timeout=30)
             raise AssertionError('Missing page must return 404')
         except HTTPError as error:
             assert error.code==404
