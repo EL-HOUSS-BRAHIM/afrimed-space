@@ -5,6 +5,7 @@ from pathlib import Path
 from html.parser import HTMLParser
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+from urllib.robotparser import RobotFileParser
 from xml.etree import ElementTree as ET
 
 class Page(HTMLParser):
@@ -46,7 +47,9 @@ for slug,domain in [('yaqeen','yaqeen-w.tech'),('afrimed','health.afrimed.space'
     assert page.website and page.items['url']==base and page.items['name']
     png=read('social-preview.png'); assert png[:8]==b'\x89PNG\r\n\x1a\n'
     assert struct.unpack('>II',png[16:24])==(1200,630)
-    robots=read('robots.txt').decode();assert f'Sitemap: {base}sitemap.xml' in robots and 'Disallow: /' not in robots
+    robots=read('robots.txt').decode()
+    parser=RobotFileParser(); parser.parse(robots.splitlines())
+    assert f'Sitemap: {base}sitemap.xml' in robots and parser.can_fetch('Googlebot',base)
     tree=ET.fromstring(read('sitemap.xml')); assert [n.text for n in tree.iter() if n.tag.endswith('}loc')]==[base]
     if live:
         with urlopen(Request(base+'index.html',headers={'User-Agent':'Googlebot'}),timeout=30) as r: assert r.url==base
